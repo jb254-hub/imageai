@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Exegesis Image AI</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #111827;
+        }
+
+        .container {
+            width: min(900px, 94%);
+            margin: 50px auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #6b7280;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 130px;
+            resize: vertical;
+            padding: 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #111827;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        select {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #111827;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .result {
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .result img {
+            width: 100%;
+            max-width: 700px;
+            border-radius: 15px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.15);
+        }
+
+        .download {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 20px;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            border-radius: 9px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>Exegesis Image AI</h1>
+        <p>Describe an image and the AI will generate it.</p>
+    </div>
+
+    <div class="card">
+
+        <textarea
+            id="prompt"
+            placeholder="Example: A futuristic African city at sunset, with autonomous electric vehicles, cinematic photography..."
+        ></textarea>
+
+        <div class="controls">
+
+            <select id="size">
+                <option value="1024">1024 × 1024</option>
+                <option value="768">768 × 768</option>
+                <option value="512">512 × 512</option>
+            </select>
+
+            <button id="generateBtn" onclick="generateImage()">
+                Generate Image
+            </button>
+
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div id="result" class="result"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+async function generateImage() {
+
+    const prompt = document.getElementById("prompt").value.trim();
+    const button = document.getElementById("generateBtn");
+    const status = document.getElementById("status");
+    const result = document.getElementById("result");
+
+    if (!prompt) {
+        alert("Please enter an image description.");
+        return;
+    }
+
+    const size = Number(document.getElementById("size").value);
+
+    button.disabled = true;
+    button.textContent = "Generating...";
+    status.textContent = "The AI is creating your image...";
+    result.innerHTML = "";
+
+    try {
+
+        const response = await fetch("/api/generate-image", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                prompt: prompt,
+                width: size,
+                height: size
+            })
+
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || "Generation failed.");
+        }
+
+        status.textContent = "Image generated successfully.";
+
+        result.innerHTML = `
+            <img
+                src="${data.image}"
+                alt="AI generated image"
+            />
+
+            <br>
+
+            <a
+                class="download"
+                href="${data.image}"
+                download
+            >
+                Download Image
+            </a>
+        `;
+
+    } catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+            "Error: " + error.message;
+
+    } finally {
+
+        button.disabled = false;
+        button.textContent = "Generate Image";
+    }
+}
+
+</script>
+
+</body>
+</html>
